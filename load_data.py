@@ -1,3 +1,5 @@
+import torch
+# import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 
@@ -19,13 +21,13 @@ def get_dataloader(config):
 class MyDataset(Dataset):
     def __init__(self, path, split_rate, mode):
         self.lines = get_image_list(path, split_rate[(['train', 'val', 'test']).index(mode)])
-        self.trans = transforms.Compose(
+        self.trans = transforms.Compose([
             transforms.ToTensor()
-        )
+        ])
 
     def __getitem__(self, index):
-        image = get_image_for_path(self.lines[0])
-        return self.trans(image), int(self.lines[1])
+        image = get_image_for_path(self.lines[index][0])
+        return self.trans(image), torch.tensor(int(self.lines[index][1]), dtype=torch.int64)
 
     def __len__(self):
         return len(self.lines)

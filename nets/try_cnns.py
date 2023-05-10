@@ -5,6 +5,67 @@ import torch.nn as nn
 class TryCNNs(nn.Module):
     def __init__(self, config):
         super().__init__()
+        self.head = nn.Sequential(
+            nn.Conv2d(3, 8, (23, 23), padding=(11, 11)),
+            nn.Conv2d(8, 8, (1, 1)),
+            basic_conv_block(8, 8, (17, 17), (1, 1), (8, 8), (1, 1), 8),
+        )
+        self.cbs = nn.Sequential()
+        [self.cbs.append(ConvBlock(8 * 2 ** i)) for i in range(config.conv_block_count)]
+        self.body = nn.Sequential(
+            nn.Conv2d(128, 256, (7, 7), stride=(4, 4), padding=(3, 3), groups=128),
+            nn.Conv2d(256, 768, (5, 5), stride=(2, 2), padding=(2, 2), groups=256)
+        )
+        self.tail = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(2 * 2 * 768, 512),
+            nn.Dropout(.3),
+            nn.Linear(512, config.class_num),
+            nn.Softmax(dim=1)
+        )
 
     def forward(self, x):
-        pass
+        return self.tail(self.body(self.cbs(self.head(x))))
+
+
+def basic_conv_block(inc, ouc, ks, st, pd, dl, gr):
+    return nn.Sequential(
+        nn.Conv2d(inc, ouc, kernel_size=ks, stride=st, padding=pd, dilation=dl, groups=gr),
+        nn.BatchNorm2d(ouc),
+        nn.ELU()
+    )
+
+
+class ConvBlock(nn.Module):
+    def __init__(self, inc):
+        super().__init__()
+        self.ms = nn.ModuleList([
+            nn.Sequential(
+                basic_conv_block(inc, inc // 2, (1, 1), (1, 1), (0, 0), (1, 1), 1),
+                basic_conv_block(inc // 2, inc // 2, (13, 13), (1, 1), (6, 6), (1, 1), inc // 2),
+                basic_conv_block(inc // 2, inc, (13, 13), (2, 2), (6, 6), (1, 1), inc // 2),
+            ),
+            nn.Sequential(
+                basic_conv_block(inc, inc // 2, (1, 1), (1, 1), (0, 0), (1, 1), 1),
+                basic_conv_block(inc // 2, inc // 2, (13, 13), (1, 1), (6, 6), (1, 1), inc // 2),
+                basic_conv_block(inc // 2, inc, (13, 13), (2, 2), (12, 12), (2, 2), inc // 2),
+            ),
+            nn.Sequential(
+                basic_conv_block(inc, inc // 2, (1, 1), (1, 1), (0, 0), (1, 1), 1),
+                basic_conv_block(inc // 2, inc // 2, (13, 13), (1, 1), (12, 12), (2, 2), inc // 2),
+                basic_conv_block(inc // 2, inc, (13, 13), (2, 2), (6, 6), (1, 1), inc // 2),
+            ),
+            nn.Sequential(
+                basic_conv_block(inc, inc // 2, (1, 1), (1, 1), (0, 0), (1, 1), 1),
+                basic_conv_block(inc // 2, inc // 2, (13, 13), (1, 1), (12, 12), (2, 2), inc // 2),
+                basic_conv_block(inc // 2, inc, (13, 13), (2, 2), (12, 12), (2, 2), inc // 2),
+            )
+        ])
+        self.rs = nn.Sequential(
+            basic_conv_block(inc * 4, inc * 2, (1, 1), (1, 1), (0, 0), (1, 1), 1),
+            basic_conv_block(inc * 2, inc * 2, (9, 9), (1, 1), (4, 4), (1, 1), inc * 2)
+        )
+
+    def forward(self, x):
+        y = torch.cat([m(x) for m in self.ms], dim=1)
+        return self.rs(y)

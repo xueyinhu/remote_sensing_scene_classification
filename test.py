@@ -6,4 +6,4 @@ from nets.try_cnns import TryCNNs
 
 config = get_config()
 _, _, test_dataloader = get_dataloader(config)
-net = TryCNNs(config)
+net = TryCNNs(config).load_state_dict(torch.load(''))
