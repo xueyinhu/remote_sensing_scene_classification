@@ -1,14 +1,13 @@
 import torch
-# import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, random_split
 from torchvision import transforms
 
-from utils import get_image_list, get_image_for_path
+from utils import get_image_list_for_txt, get_image_for_path, get_image_list_for_path
 
 
-def get_dataloader(config):
+def get_dataloader_1(config):
     modes = ['train', 'val', 'test']
-    datasets = [MyDataset(config.txt_path, config.split_rate, mode) for mode in modes]
+    datasets = [MyDataset_1(config.txt_path, config.split_rate, mode) for mode in modes]
     return [
         DataLoader(
             datasets[modes.index(mode)],
@@ -18,9 +17,20 @@ def get_dataloader(config):
     ]
 
 
-class MyDataset(Dataset):
+def get_dataloader_2(config):
+    datasets = MyDataset_2(config.data_path)
+    split_length = [int(datasets.__len__() * (i[1] * 10 - i[0] * 10) / 10) for i in config.split_rate]
+    datasets = random_split(datasets, lengths=split_length)
+    return [
+        DataLoader(
+            dataset, batch_size=config.batch_size, shuffle=True
+        ) for dataset in datasets
+    ]
+
+
+class MyDataset_1(Dataset):
     def __init__(self, path, split_rate, mode):
-        self.lines = get_image_list(path, split_rate[(['train', 'val', 'test']).index(mode)])
+        self.lines = get_image_list_for_txt(path, split_rate[(['train', 'val', 'test']).index(mode)])
         self.trans = transforms.Compose([
             transforms.ToTensor()
         ])
@@ -31,3 +41,23 @@ class MyDataset(Dataset):
 
     def __len__(self):
         return len(self.lines)
+
+
+class MyDataset_2(Dataset):
+    def __init__(self, path):
+        super().__init__()
+        self.data_list = get_image_list_for_path(path)
+        self.trans = transforms.Compose([
+            transforms.ToTensor()
+        ])
+
+    def __getitem__(self, index):
+        data = self.data_list[index].split(' ')
+        return self.trans(get_image_for_path(data[0])), torch.tensor(int(data[1]))
+
+    def __len__(self):
+        return len(self.data_list)
+
+
+
+

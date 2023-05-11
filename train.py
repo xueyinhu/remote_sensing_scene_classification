@@ -2,58 +2,73 @@ import torch
 from torch.nn import CrossEntropyLoss
 import torch.optim as optim
 from torchsummary import summary
+import numpy as np
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 from config import get_config
-from load_data import get_dataloader
+from load_data import get_dataloader_2
 from nets.try_cnns import TryCNNs
 
 config = get_config()
-train_dataloader, val_dataloader, _ = get_dataloader(config)
+train_dataloader, val_dataloader, test_dataloader = get_dataloader_2(config)
 device = torch.device(config.device)
 net = TryCNNs(config).to(device)
-summary(net, input_size=(3, 256, 256))
+summary(net, input_size=(3, 600, 600))
 criterion = CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters(), lr=config.lr)
 
 
 def train():
-    running_loss = 0.
-    for _, (image, label) in enumerate(train_dataloader):
-        image, label = image.to(device), label.to(device)
-        out_p = net(image)
-        loss = criterion(out_p, label)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        running_loss += loss.item()
-    return running_loss
-
-
-def val():
-    correct, total = 0, 0
-    with torch.no_grad():
-        for _, (image, label) in enumerate(val_dataloader):
-            image, label = image.to(device), label.to(device)
-            out_p = net(image)
-            prediction = out_p.argmax(dim=1)
-            total += label.size(0)
-            correct += sum(prediction == label)
-        print('Accuracy on val dataset: ( %d / %d ) -> %d %%' % (correct, total, 100 * correct / total))
-
-
-if __name__ == '__main__':
-    loss_list = []
-    best_loss = 1e3
+    train_epochs_loss = []
+    valid_epochs_loss = []
+    train_acc = []
+    val_acc = []
     for epoch in range(config.epoch_count):
-        loss_list.append(train())
-        print("Epoch: %d, loss: %5f" % (epoch + 1, loss_list[epoch]))
-        val()
-        if loss_list[epoch] < best_loss:
-            best_loss = loss_list[epoch]
-            torch.save(net, "models/best_loss_%f.pth" % best_loss)
-    plt.title('Graph')
-    plt.plot(range(config.epoch_count), loss_list)
-    plt.ylabel("loss")
-    plt.xlabel("epoch")
+        net.train()
+        train_epoch_loss = []
+        acc, nums = 0, 0
+        for idx, (inputs, labels) in enumerate(tqdm(train_dataloader)):
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+            outputs = net(inputs)
+            optimizer.zero_grad()
+            loss = criterion(outputs, labels)
+            loss.backward()
+            # torch.nn.utils.clip_grad_norm_(model.parameters(), 2.0)
+            optimizer.step()
+            train_epoch_loss.append(loss.item())
+            acc += sum(outputs.max(axis=1)[1] == labels).cpu()
+            nums += labels.size()[0]
+        train_epochs_loss.append(np.average(train_epoch_loss))
+        train_acc.append(100 * acc / nums)
+        print("train acc = {:.3f}%, loss = {}".format(100 * acc / nums, np.average(train_epoch_loss)))
+        with torch.no_grad():
+            net.eval()
+            val_epoch_loss = []
+            acc, nums = 0, 0
+            for idx, (inputs, labels) in enumerate(tqdm(val_dataloader)):
+                inputs = inputs.to(device)
+                labels = labels.to(device)
+                outputs = net(inputs)
+                loss = criterion(outputs, labels)
+                val_epoch_loss.append(loss.item())
+                acc += sum(outputs.max(axis=1)[1] == labels).cpu()
+                nums += labels.size()[0]
+            valid_epochs_loss.append(np.average(val_epoch_loss))
+            val_acc.append(100 * acc / nums)
+            print("epoch = {}, valid acc = {:.2f}%, loss = {}".format(epoch, 100 * acc / nums, np.average(val_epoch_loss)))
+    plt.figure(figsize=(12, 4))
+    plt.subplot(121)
+    plt.plot(train_epochs_loss[:])
+    plt.title("train_loss")
+    plt.subplot(122)
+    plt.plot(train_epochs_loss, '-o', label="train_loss")
+    plt.plot(valid_epochs_loss, '-o', label="valid_loss")
+    plt.title("epochs_loss")
+    plt.legend()
     plt.show()
+    torch.save(net.state_dict(), 'models/model.pth')
+
+
+train()
