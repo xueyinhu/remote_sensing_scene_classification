@@ -14,13 +14,12 @@ class TryCNNs(nn.Module):
         [self.cbs.append(ConvBlock(8 * 2 ** i)) for i in range(config.conv_block_count)]
         self.body = nn.Sequential(
             basic_conv_block(64, 128, (11, 11), (5, 5), (5, 5), (1, 1), 64),
-            nn.Conv2d(128, 128, (1, 1)),
-            basic_conv_block(128, 128, (11, 11), (5, 5), (5, 5), (1, 1), 128)
+            basic_conv_block(128, 256, (11, 11), (5, 5), (5, 5), (1, 1), 128)
         )
         self.tail = nn.Sequential(
             nn.Flatten(),
-            nn.Dropout(.3),
-            nn.Linear(3 * 3 * 128, 64),
+            nn.Dropout(.2),
+            nn.Linear(256 * 9, 64),
             nn.Linear(64, config.class_num),
             nn.Softmax(dim=1)
         )

@@ -4,7 +4,6 @@ import torch.optim as optim
 from torchsummary import summary
 import numpy as np
 from tqdm import tqdm
-import matplotlib.pyplot as plt
 
 from config import get_config
 from load_data import get_dataloader_2
@@ -58,16 +57,6 @@ def train():
             valid_epochs_loss.append(np.average(val_epoch_loss))
             val_acc.append(100 * acc / nums)
             print("epoch = {}, valid acc = {:.2f}%, loss = {}".format(epoch, 100 * acc / nums, np.average(val_epoch_loss)))
-    plt.figure(figsize=(12, 4))
-    plt.subplot(121)
-    plt.plot(train_epochs_loss[:])
-    plt.title("train_loss")
-    plt.subplot(122)
-    plt.plot(train_epochs_loss, '-o', label="train_loss")
-    plt.plot(valid_epochs_loss, '-o', label="valid_loss")
-    plt.title("epochs_loss")
-    plt.legend()
-    plt.show()
     torch.save(net.state_dict(), 'models/model.pth')
 
 
