@@ -13,6 +13,9 @@ config = get_config()
 train_dataloader, val_dataloader, test_dataloader = get_dataloader_2(config)
 device = torch.device(config.device)
 net = TryCNNs(config).to(device)
+for name, param in net.named_parameters():
+    if "head" in name:
+        param.requires_grad = False
 summary(net, input_size=(3, 600, 600))
 criterion = CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters(), lr=config.lr)

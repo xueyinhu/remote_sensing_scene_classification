@@ -1,5 +1,6 @@
 import os
 import cv2
+from PIL import Image
 
 
 def generate_dataset_txt(path='F:/NWPU-RESISC45/'):
@@ -28,4 +29,8 @@ def get_image_list_for_path(path):
 
 def get_image_for_path(path):
     return cv2.imread(path)
+
+
+def get_image_for_path_pil(path):
+    return Image.open(path)
 

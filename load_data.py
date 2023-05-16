@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader, random_split
 from torchvision import transforms
 
-from utils import get_image_list_for_txt, get_image_for_path, get_image_list_for_path
+from utils import get_image_list_for_txt, get_image_for_path, get_image_list_for_path, get_image_for_path_pil
 
 
 def get_dataloader_1(config):
@@ -54,7 +54,7 @@ class MyDataset_2(Dataset):
 
     def __getitem__(self, index):
         data = self.data_list[index].split(' ')
-        return self.trans(get_image_for_path(data[0])), torch.tensor(int(data[1]))
+        return self.trans(get_image_for_path_pil(data[0])), torch.tensor(int(data[1]))
 
     def __len__(self):
         return len(self.data_list)

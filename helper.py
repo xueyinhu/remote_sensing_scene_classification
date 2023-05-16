@@ -1,10 +1,20 @@
 import torch
+import torch.nn as nn
 from torchsummary import summary
 
-from config import get_config
-from nets.try_cnns import TryCNNs
+# from config import get_config
+#
+# config = get_config()
+# device = torch.device(config.device)
 
-config = get_config()
-device = torch.device(config.device)
-net = TryCNNs(config).to(device)
-summary(net, input_size=(3, 600, 600))
+
+
+
+# net = NewNet(config).to(device)
+# for name, param in net.named_parameters():
+#     if "head" in name:
+#         param.requires_grad = False
+# summary(net, input_size=(3, 600, 600))
+
+
+
