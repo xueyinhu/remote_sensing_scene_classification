@@ -19,3 +19,4 @@ class NewNet(nn.Module):
         for h in self.head:
             x = h(x)
         return self.tail(x)
+
