@@ -9,13 +9,16 @@ from config import get_config
 from load_data import get_dataloader_2
 from nets.try_cnns import TryCNNs
 
+from torchvision.models.shufflenetv2 import shufflenet_v2_x0_5
+
 config = get_config()
 train_dataloader, val_dataloader, test_dataloader = get_dataloader_2(config)
 device = torch.device(config.device)
-net = TryCNNs(config).to(device)
-for name, param in net.named_parameters():
-    if "head" in name:
-        param.requires_grad = False
+net = shufflenet_v2_x0_5(num_classes=30).to(device)
+# net = TryCNNs(config).to(device)
+# for name, param in net.named_parameters():
+#     if "head" in name:
+#         param.requires_grad = False
 summary(net, input_size=(3, 600, 600))
 criterion = CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters(), lr=config.lr)
@@ -44,7 +47,7 @@ def train():
             nums += labels.size()[0]
         train_epochs_loss.append(np.average(train_epoch_loss))
         train_acc.append(100 * acc / nums)
-        print("train acc = {:.3f}%, loss = {}".format(100 * acc / nums, np.average(train_epoch_loss)))
+        print("epoch = {}, train acc = {:.3f}%, loss = {}".format(epoch, 100 * acc / nums, np.average(train_epoch_loss)))
         with torch.no_grad():
             net.eval()
             val_epoch_loss = []

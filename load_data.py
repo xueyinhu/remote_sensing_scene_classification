@@ -49,7 +49,7 @@ class MyDataset_2(Dataset):
         self.data_list = get_image_list_for_path(path)
         self.trans = transforms.Compose([
             transforms.ToTensor(),
-            # transforms.Resize((256, 256))
+            # transforms.Resize((300, 300))
         ])
 
     def __getitem__(self, index):
