@@ -65,7 +65,7 @@ def show_image(model_path, image_path):
 
 
 if __name__ == '__main__':
-    train()
+    # train()
     # test('models/epoch_2_valid_loss_5152471.5.pth')
-    # show_image('models/epoch_29_valid_loss_132667.984375.pth', 'airport_2.jpg')
+    show_image('models/epoch_28_valid_loss_839899.375.pth', 'meadow_243.jpg')
 
