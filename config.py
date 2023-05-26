@@ -14,7 +14,7 @@ def get_config():
     parser.add_argument('--conv_block_count', default=7)
     parser.add_argument('--device', default='cuda')
     parser.add_argument('--epoch_count', default=30)
-    parser.add_argument('--batch_size', default=128)
+    parser.add_argument('--batch_size', default=32)
     parser.add_argument('--loss_function', default='CrossEntropyLoss')
     parser.add_argument('--optimizer', default='Adam')
     parser.add_argument('--lr', default=1e-3)

@@ -7,14 +7,13 @@ from tqdm import tqdm
 
 from config import get_config
 from load_data import get_dataloader_2
-from nets.try_cnns import TryCNNs
+from nets.re_conv import MyNet
 
-from torchvision.models.mobilenetv3 import mobilenet_v3_small
 
 config = get_config()
 train_dataloader, val_dataloader, test_dataloader = get_dataloader_2(config)
 device = torch.device(config.device)
-net = mobilenet_v3_small(num_classes=45).to(device)
+net = MyNet().to(device)
 # for name, param in net.named_parameters():
 #     if "head" in name:
 #         param.requires_grad = False

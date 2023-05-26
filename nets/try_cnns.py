@@ -33,7 +33,7 @@ def basic_conv_block(inc, ouc, ks, st, pd, dl, gr):
     return nn.Sequential(
         nn.Conv2d(inc, ouc, kernel_size=ks, stride=st, padding=pd, dilation=dl, groups=gr),
         nn.BatchNorm2d(ouc),
-        nn.ELU()
+        # nn.ELU()
     )
 
 
