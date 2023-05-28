@@ -9,11 +9,13 @@ from config import get_config
 from load_data import get_dataloader_2
 from nets.re_conv import MyNet
 
+from torchvision.models import shufflenet_v2_x0_5, resnet34
+
 
 config = get_config()
 train_dataloader, val_dataloader, test_dataloader = get_dataloader_2(config)
 device = torch.device(config.device)
-net = MyNet().to(device)
+net = resnet34(num_classes=45).to(device)
 # for name, param in net.named_parameters():
 #     if "head" in name:
 #         param.requires_grad = False
@@ -82,4 +84,4 @@ def test(model_path):
 
 
 train()
-# test('./models/model.pth')
+test('./models/model.pth')
