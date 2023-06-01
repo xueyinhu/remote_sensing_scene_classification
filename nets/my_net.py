@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torch import Tensor
 
 
 def conv_bn_block(inc, ouc, ks, st, pd, dl, gr):
@@ -47,6 +48,8 @@ class Block_1(nn.Module):
             nn.Conv2d(inc, inc, (1, 1)),
             nn.BatchNorm2d(inc)
         )
+        self.c1 = nn.Conv2d(inc, inc // 2, (1, 1))
+        self.c2 = nn.Conv2d(inc, inc // 2, (1, 1))
 
     def forward(self, x):
         x = self.cb(x)
@@ -54,6 +57,8 @@ class Block_1(nn.Module):
             x1, x2 = torch.split(x, dim=1, split_size_or_sections=self.inc // 2)
         else:
             x2, x1 = torch.split(x, dim=1, split_size_or_sections=self.inc // 2)
+        x1 = self.c1(x)
+        x2 = self.c2(x)
         x1 = self.b1(x1)
         x2 = self.b2(x2)
         y = torch.cat([x1, x2], dim=1)
@@ -71,10 +76,11 @@ class Block_2(nn.Module):
         )
         self.b2 = nn.Sequential(
             conv_bn_block(inc, inc, (1, 1), (1, 1), (0, 0), (1, 1), 1),
-            conv_bn_block(inc, inc, (3, 1), (1, 1), (1, 0), (1, 1), inc),
-            conv_bn_block(inc, inc, (1, 3), (1, 1), (0, 1), (1, 1), inc),
             conv_bn_block(inc, inc, (3, 1), (2, 1), (1, 0), (1, 1), inc),
             conv_bn_block(inc, inc, (1, 3), (1, 2), (0, 1), (1, 1), inc),
+            conv_bn_block(inc, inc, (1, 1), (1, 1), (0, 0), (1, 1), 1),
+            conv_bn_block(inc, inc, (3, 1), (1, 1), (1, 0), (1, 1), inc),
+            conv_bn_block(inc, inc, (1, 3), (1, 1), (0, 1), (1, 1), inc),
         )
 
     def forward(self, x):
@@ -85,8 +91,9 @@ class Block_2(nn.Module):
 
 
 class MyNet(nn.Module):
-    def __init__(self):
+    def __init__(self, config):
         super().__init__()
+        self.config = config
         self.head = nn.Sequential(
             nn.Conv2d(3, 8, (3, 3), padding=(1, 1)),
             nn.BatchNorm2d(8),
@@ -116,18 +123,12 @@ class MyNet(nn.Module):
             Block_1(512, False),
             Block_2(512),
         )
-        self.body_4 = nn.Sequential(
-            Block_2(256),
-            Block_2(512),
-        )
-        self.body_5 = nn.Sequential(
-            Block_2(512),
-        )
         self.tail = nn.Sequential(
             nn.AdaptiveAvgPool2d((1, 1)),
+            # nn.Conv2d(1024, 256, (1, 1)),
             nn.Flatten(),
-            nn.Dropout(.4),
-            nn.Linear(1024 * 3, 45),
+            nn.Dropout(.2),
+            nn.Linear(1024, self.config.class_num),
         )
 
     def forward(self, x):
@@ -135,10 +136,7 @@ class MyNet(nn.Module):
         x1 = self.body_1(x0)
         x2 = self.body_2(x1)
         x3 = self.body_3(x2)
-        x4 = self.body_4(x1)
-        x5 = self.body_5(x2)
-        x = torch.cat([x4, x5, x3], dim=1)
-        return self.tail(x)
+        return self.tail(x3)
 
 
 

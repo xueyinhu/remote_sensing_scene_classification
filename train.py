@@ -7,15 +7,16 @@ from tqdm import tqdm
 
 from config import get_config
 from load_data import get_dataloader_2
-from nets.my_net import MyNet
+from nets.try_net import FPN101
 
-from torchvision.models import shufflenet_v2_x2_0
+from torchvision.models import inception_v3
 
 
 config = get_config()
 train_dataloader, val_dataloader, test_dataloader = get_dataloader_2(config)
 device = torch.device(config.device)
-net = shufflenet_v2_x2_0(num_classes=45).to(device)
+net = FPN101().to(device)
+# net = inception_v3(num_classes=10, aux_logits=False).to(device)
 summary(net, input_size=(3, 256, 256))
 criterion = CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters(), lr=config.lr)
@@ -82,3 +83,4 @@ def test(model_path):
 
 train()
 test('./models/model.pth')
+

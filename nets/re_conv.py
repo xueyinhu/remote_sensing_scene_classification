@@ -163,7 +163,7 @@ class MyNet(nn.Module):
             # nn.AdaptiveAvgPool2d((1, 1)),
             nn.Flatten(),
             nn.Dropout(.4),
-            nn.Linear(1024, 45),
+            nn.Linear(1024, 10),
             # nn.Softmax(dim=1)
         )
 
